@@ -1,0 +1,35 @@
+import type { LatLng } from '@/lib/route-places'
+
+export type MapCity = { name: string; position: LatLng; minZoom: number }
+
+export const mapCities: MapCity[] = [
+  { name: 'Skopje', position: [41.9973, 21.428], minZoom: 0 },
+  { name: 'Pristina', position: [42.6629, 21.1655], minZoom: 0 },
+  { name: 'Sofia', position: [42.6977, 23.3219], minZoom: 0 },
+  { name: 'Thessaloniki', position: [40.6401, 22.9444], minZoom: 0 },
+  { name: 'Tirana', position: [41.3275, 19.8187], minZoom: 0 },
+  { name: 'Belgrade', position: [44.7866, 20.4489], minZoom: 0 },
+  { name: 'Niš', position: [43.3209, 21.8958], minZoom: 7 },
+  { name: 'Prizren', position: [42.2139, 20.7397], minZoom: 7 },
+  { name: 'Elbasan', position: [41.1125, 20.0822], minZoom: 7 },
+  { name: 'Korçë', position: [40.6186, 20.7808], minZoom: 7 },
+  { name: 'Bitola', position: [41.0297, 21.3292], minZoom: 7 },
+  { name: 'Ohrid', position: [41.1231, 20.8016], minZoom: 7 },
+  { name: 'Kumanovo', position: [42.1322, 21.7144], minZoom: 7 },
+  { name: 'Tetovo', position: [42.0069, 20.9715], minZoom: 8 },
+  { name: 'Gostivar', position: [41.7958, 20.9083], minZoom: 8 },
+  { name: 'Debar', position: [41.525, 20.5272], minZoom: 8 },
+  { name: 'Struga', position: [41.1778, 20.6783], minZoom: 8 },
+  { name: 'Kičevo', position: [41.5129, 20.9589], minZoom: 8 },
+  { name: 'Prilep', position: [41.3464, 21.5542], minZoom: 8 },
+  { name: 'Veles', position: [41.7156, 21.7756], minZoom: 8 },
+  { name: 'Kavadarci', position: [41.4331, 22.0119], minZoom: 8 },
+  { name: 'Štip', position: [41.7458, 22.1958], minZoom: 8 },
+  { name: 'Kočani', position: [41.9167, 22.4125], minZoom: 8 },
+  { name: 'Strumica', position: [41.4375, 22.6431], minZoom: 8 },
+  { name: 'Gevgelija', position: [41.1392, 22.5025], minZoom: 8 },
+  { name: 'Resen', position: [41.0893, 21.0109], minZoom: 9 },
+  { name: 'Kruševo', position: [41.3689, 21.2483], minZoom: 9 },
+  { name: 'Kratovo', position: [42.0783, 22.1806], minZoom: 9 },
+  { name: 'Negotino', position: [41.4839, 22.0892], minZoom: 9 },
+]

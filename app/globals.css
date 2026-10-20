@@ -1,0 +1,313 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+.booking-phone .PhoneInputInput { background: transparent; color: var(--foreground); min-width: 0; outline: none; }
+.booking-phone .PhoneInputCountrySelect { color: var(--foreground); background: var(--background); }
+.booking-phone .PhoneInputCountry { margin-right: 0.75rem; }
+.booking-phone .PhoneInputCountryIcon { box-shadow: none; }
+.booking-green [role='timer'], .booking-green .text-gold { color: var(--booking); }
+.booking-green .text-muted-foreground { color: var(--booking-foreground); }
+.booking-status-requested { --booking: #fcd34d; --booking-foreground: #fef3c7; --booking-surface: #422006; }
+.booking-status-declined { --booking: #fca5a5; --booking-foreground: #fee2e2; --booking-surface: #450a0a; }
+.theme-autumn { --gold: oklch(0.64 0.11 55); --gold-foreground: oklch(0.97 0.02 75); --ring: oklch(0.64 0.11 55); }
+
+@theme inline {
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+  --color-booking: var(--booking);
+  --color-booking-foreground: var(--booking-foreground);
+  --color-booking-surface: var(--booking-surface);
+  --color-gold: var(--gold);
+  --color-gold-foreground: var(--gold-foreground);
+}
+
+:root {
+  --booking: #6ee7b7;
+  --booking-foreground: #d1fae5;
+  --booking-surface: #064e3b;
+  color-scheme: dark;
+  --background: oklch(0.17 0.015 265);
+  --foreground: oklch(0.95 0.008 85);
+  --card: oklch(0.21 0.017 265);
+  --card-foreground: oklch(0.95 0.008 85);
+  --popover: oklch(0.2 0.017 265);
+  --popover-foreground: oklch(0.95 0.008 85);
+  --primary: oklch(0.29 0.03 265);
+  --primary-foreground: oklch(0.96 0.01 85);
+  --secondary: oklch(0.23 0.017 265);
+  --secondary-foreground: oklch(0.95 0.008 85);
+  --muted: oklch(0.24 0.015 265);
+  --muted-foreground: oklch(0.72 0.01 90);
+  --accent: oklch(0.82 0.125 85);
+  --accent-foreground: oklch(0.24 0.04 70);
+  --gold: oklch(0.82 0.125 85);
+  --gold-foreground: oklch(0.2 0.04 70);
+  --destructive: oklch(0.6 0.22 25);
+  --border: oklch(0.31 0.012 265);
+  --input: oklch(0.31 0.012 265);
+  --ring: oklch(0.82 0.125 85);
+  --chart-1: oklch(0.82 0.125 85);
+  --chart-2: oklch(0.6 0.08 265);
+  --chart-3: oklch(0.7 0.1 200);
+  --chart-4: oklch(0.65 0.12 40);
+  --chart-5: oklch(0.75 0.1 140);
+  --radius: 0.75rem;
+  --sidebar: oklch(0.19 0.017 265);
+  --sidebar-foreground: oklch(0.95 0.008 85);
+  --sidebar-primary: oklch(0.82 0.125 85);
+  --sidebar-primary-foreground: oklch(0.2 0.04 70);
+  --sidebar-accent: oklch(0.24 0.015 265);
+  --sidebar-accent-foreground: oklch(0.95 0.008 85);
+  --sidebar-border: oklch(0.31 0.012 265);
+  --sidebar-ring: oklch(0.82 0.125 85);
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .text-gold-gradient {
+    background: linear-gradient(115deg, oklch(0.92 0.08 95), oklch(0.78 0.14 78) 55%, oklch(0.68 0.13 62));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .gold-hairline {
+    background: linear-gradient(
+      90deg,
+      transparent,
+      oklch(0.82 0.125 85 / 0.5) 20%,
+      oklch(0.82 0.125 85 / 0.5) 80%,
+      transparent
+    );
+  }
+  .luxury-glow {
+    box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.05) inset, 0 30px 70px -30px oklch(0 0 0 / 0.75),
+      0 0 0 1px oklch(0.82 0.125 85 / 0.12);
+  }
+  .hero-vignette {
+    background:
+      radial-gradient(120% 90% at 15% 20%, transparent 40%, oklch(0.13 0.015 265 / 0.85) 100%),
+      linear-gradient(90deg, oklch(0.14 0.015 265) 0%, oklch(0.15 0.015 265 / 0.7) 45%, transparent 80%);
+  }
+}
+
+/* Intro: on the first visit a plane flies bottom to top, wiping the splash away behind it */
+.plane-intro {
+  animation: intro-done 0s linear 2.9s 1 forwards;
+}
+
+.intro-seen .plane-intro {
+  display: none;
+}
+
+.plane-sweep {
+  animation: plane-sweep 2.6s cubic-bezier(0.45, 0, 0.25, 1) 0.2s 1 both;
+  will-change: transform;
+}
+
+.plane-edge {
+  background: linear-gradient(to right, transparent, var(--gold), transparent);
+  box-shadow: 0 0 24px 4px color-mix(in oklch, var(--gold) 45%, transparent);
+}
+
+.plane-trail {
+  background: linear-gradient(to top, transparent, oklch(1 0 0 / 0.75));
+  border-radius: 9999px;
+}
+
+@keyframes plane-sweep {
+  from {
+    transform: translate3d(0, 10rem, 0);
+  }
+  to {
+    transform: translate3d(0, calc(-100vh - 20rem), 0);
+  }
+}
+
+@keyframes intro-done {
+  to {
+    visibility: hidden;
+  }
+}
+
+/* Route map */
+.route-map {
+  background: #111318;
+  font-family: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+}
+
+.route-map .route-base {
+  filter: brightness(0.62) contrast(1.15) saturate(0.6);
+}
+
+  .route-map .route-city {
+  pointer-events: none;
+  }
+
+  .route-map .route-city-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgb(255 255 255 / 0.55);
+  text-shadow: 0 0 3px #111318, 0 0 6px #111318;
+  }
+
+.route-controls {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  margin: 12px 12px 0 0 !important;
+  border-radius: 10px;
+  background: rgb(24 27 34 / 0.92);
+  border: 1px solid rgb(255 255 255 / 0.08);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(6px);
+}
+
+.route-controls button + button {
+  border-top: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.route-pin {
+  background: none;
+  border: 0;
+}
+
+.route-pin-svg {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  filter: drop-shadow(0 3px 6px rgb(0 0 0 / 0.5));
+}
+
+.route-pin-glow {
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 34px;
+  height: 14px;
+  translate: -50% 0;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at center, rgb(245 197 66 / 0.55), rgb(245 197 66 / 0) 70%);
+}
+
+.route-pin-label {
+  position: absolute;
+  left: 34px;
+  top: 7px;
+  white-space: nowrap;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: rgb(20 22 28 / 0.92);
+  border: 1px solid rgb(255 255 255 / 0.06);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
+}
+
+.route-tooltip.leaflet-tooltip {
+  background: rgb(20 22 28 / 0.92);
+  color: #ffffff;
+  border: 1px solid rgb(255 255 255 / 0.06);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.45);
+}
+
+.route-tooltip.leaflet-tooltip-right::before {
+  border-right-color: rgb(20 22 28 / 0.92);
+}
+
+.route-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: route-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) 0.3s forwards;
+}
+
+.route-car {
+  background: none;
+  border: 0;
+}
+
+.route-car-badge {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9999px;
+  background: #f5c542;
+  color: #14171f;
+  border: 2px solid #14171f;
+  box-shadow: 0 0 0 6px rgb(245 197 66 / 0.22), 0 4px 12px rgb(0 0 0 / 0.5);
+}
+
+@keyframes route-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plane-intro {
+    display: none;
+  }
+}
