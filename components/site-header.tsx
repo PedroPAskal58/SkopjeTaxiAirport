@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { nav, tourList, transfers } from '@/lib/site'
 import { PlaneIntro } from '@/components/plane-intro'
 import { BookingBanner } from '@/components/booking-banner'
+import { RejectedToast } from '@/components/rejected-toast'
 
 const PLAY_INTRO_KEY = 'play-plane-intro'
 
@@ -234,6 +235,7 @@ export function SiteHeader() {
         )}
       </div>
       <BookingBanner />
+      <RejectedToast />
     </header>
   )
 }

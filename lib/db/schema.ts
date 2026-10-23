@@ -23,6 +23,8 @@ export const bookings = pgTable('bookings', {
   cancelledAt: timestamp('cancelled_at', { withTimezone: true }),
   notificationPending: boolean('notification_pending').notNull().default(true),
   revision: integer('revision').notNull().default(1),
+  channel: text('channel').notNull().default('web'),
+  whatsappSentAt: timestamp('whatsapp_sent_at', { withTimezone: true }),
 })
 
 export const contactMessages = pgTable('contact_messages', {

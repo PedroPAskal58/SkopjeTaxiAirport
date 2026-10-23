@@ -5,6 +5,7 @@ import { BookingPhoneField } from '@/components/booking-phone-field'
 import { BookingScheduleFields } from '@/components/booking-schedule-fields'
 import { validateBookingDetails } from '@/lib/booking-validation'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import {
   Users,
@@ -19,16 +20,17 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { site, vehicles, tours, type VehicleSlug, type TourSlug } from '@/lib/site'
+import { buildCustomerMessage } from '@/lib/whatsapp-message'
 import {
   getTransfer,
   hasPickupPointChoice,
+  hasLockedAirportPickup,
   pickupPointLabels,
   SKOPJE_AIRPORT_PICKUP,
   type PickupPoint,
 } from '@/lib/transfers'
 import { PickupPointChoice } from '@/components/pickup-point-choice'
 import { saveBooking } from '@/lib/booking-memory'
-import { BookingCountdown } from '@/components/booking-countdown'
 
 const vehicleImages: Record<VehicleSlug, string> = {
   mondeo: '/images/fleet-mondeo.png',
@@ -175,6 +177,7 @@ export function ReserveForm({
   const kindWord = isTour ? 'tour' : isTransferRequest ? 'transfer' : 'vehicle'
 
   const showPickupChoice = hasPickupPointChoice(transfer)
+  const pickupLocked = isTransfer && hasLockedAirportPickup(transfer)
   const [pickupPoint, setPickupPoint] = useState<PickupPoint>('city')
   const fromLabel = showPickupChoice ? pickupPointLabels[pickupPoint] : transfer?.from
 
@@ -182,7 +185,7 @@ export function ReserveForm({
     setPickupPoint(point)
     setForm((prev) => ({
       ...prev,
-      pickup: point === 'airport' ? SKOPJE_AIRPORT_PICKUP : pickupPointLabels.city,
+      pickup: point === 'airport' ? SKOPJE_AIRPORT_PICKUP : '',
     }))
   }
 
@@ -190,7 +193,11 @@ export function ReserveForm({
     name: '',
     phone: '',
     email: '',
-    pickup: showPickupChoice ? pickupPointLabels.city : transfer?.from ?? '',
+    pickup: showPickupChoice
+      ? ''
+      : hasLockedAirportPickup(transfer)
+        ? SKOPJE_AIRPORT_PICKUP
+        : transfer?.from ?? '',
     dropoff: transfer?.to ?? '',
     destination: '',
     date: '',
@@ -199,10 +206,9 @@ export function ReserveForm({
     flight: '',
     notes: '',
   })
-  const [submitted, setSubmitted] = useState(false)
+  const router = useRouter()
   const [saving, setSaving] = useState(false)
   const [submitError, setSubmitError] = useState('')
-  const [savedId, setSavedId] = useState('')
   const requestId = useRef<string | null>(null)
 
   function update(field: keyof typeof form) {
@@ -210,127 +216,91 @@ export function ReserveForm({
       setForm((prev) => ({ ...prev, [field]: e.target.value }))
   }
 
-  function buildMessage() {
-    const v = (label: string, value: string) => `*${label}:* ${value || '-'}`
-
-    if (subject.kind === 'customTransfer') {
-      const car = vehicles[chosenCar]
-      return [
-        `*NEW CUSTOM TRANSFER REQUEST*`,
-        ``,
-        `*Vehicle:* ${car.name} (${car.type})`,
-        `━━━━━━━━━━━━━━`,
-        v('Name', form.name),
-        v('Phone', form.phone),
-        v('Pickup', form.pickup),
-        v('Drop-off', form.dropoff),
-        v('Date', form.date),
-        v('Time', form.time),
-        v('Passengers', form.passengers),
-        v('Flight no.', form.flight),
-        v('Notes', form.notes),
-      ].join('\n')
+  function buildMessage(bookingId?: string) {
+    const car = vehicles[chosenCar]
+    const vehicle = car ? `${car.name} (${car.type})` : ''
+    const common = {
+      name: form.name,
+      phone: form.phone,
+      bookingId: bookingId || undefined,
     }
 
     if (subject.kind === 'custom') {
-      return [
-        `*NEW CUSTOM TOUR REQUEST*`,
-        ``,
-        `*Requested destination(s):* ${form.destination || '-'}`,
-        `*Vehicle:* ${vehicles[chosenCar].name} (${vehicles[chosenCar].type})`,
-        `━━━━━━━━━━━━━━`,
-        v('Name', form.name),
-        v('Phone', form.phone),
-        v('Pickup / hotel', form.pickup),
-        v('Date', form.date),
-        v('Time', form.time),
-        v('Passengers', form.passengers),
-        v('Notes', form.notes),
-      ].join('\n')
+      return buildCustomerMessage({
+        ...common,
+        intro: `I'd like to arrange a custom tour${form.destination.trim() ? ` to ${form.destination.trim()}` : ''}.`,
+        details: [
+          ['Date', form.date],
+          ['Time', form.time],
+          ['Passengers', form.passengers],
+          ['Pickup / hotel', form.pickup],
+          ['Vehicle', vehicle],
+          ['Notes', form.notes],
+        ],
+      })
     }
 
     if (subject.kind === 'tour') {
-      return [
-        `*NEW TOUR BOOKING*`,
-        ``,
-        `*Tour:* ${subject.title}`,
-        `*Type:* ${subject.subtitle}`,
-        `*Price from:* €${subject.price}`,
-        `*Duration:* ${subject.duration}`,
-        `*Vehicle:* ${vehicles[chosenCar].name} (${vehicles[chosenCar].type})`,
-        `━━━━━━━━━━━━━━`,
-        v('Name', form.name),
-        v('Phone', form.phone),
-        v('Pickup / hotel', form.pickup),
-        v('Date', form.date),
-        v('Time', form.time),
-        v('Passengers', form.passengers),
-        v('Notes', form.notes),
-      ].join('\n')
+      return buildCustomerMessage({
+        ...common,
+        intro: `I'd like to book the tour "${subject.title}" (from €${subject.price}, ${subject.duration}).`,
+        details: [
+          ['Date', form.date],
+          ['Time', form.time],
+          ['Passengers', form.passengers],
+          ['Pickup / hotel', form.pickup],
+          ['Vehicle', vehicle],
+          ['Notes', form.notes],
+        ],
+      })
     }
 
-    if (subject.kind === 'transfer') {
-      const car = vehicles[chosenCar]
-      return [
-        `*NEW TRANSFER BOOKING*`,
-        ``,
-        `*Transfer:* ${subject.title}`,
-        `*Price from:* €${subject.price}`,
-        `*Distance:* ${subject.distance} (${subject.duration})`,
-        `*Vehicle:* ${car.name} (${car.type})`,
-        `━━━━━━━━━━━━━━`,
-        v('Name', form.name),
-        v('Phone', form.phone),
-        ...(showPickupChoice ? [v('Pickup from', pickupPointLabels[pickupPoint])] : []),
-        v('Pickup', form.pickup),
-        v('Drop-off', form.dropoff),
-        v('Date', form.date),
-        v('Time', form.time),
-        v('Passengers', form.passengers),
-        v('Flight no.', form.flight),
-        v('Notes', form.notes),
-      ].join('\n')
-    }
+    const intro =
+      subject.kind === 'transfer'
+        ? `I'd like to book a transfer: ${subject.title} (from €${subject.price}).`
+        : subject.kind === 'customTransfer'
+          ? `I'd like to request a private transfer.`
+          : `I'd like to reserve a ${subject.title} (${subject.subtitle}).`
 
-    return [
-      `*NEW TAXI RESERVATION*`,
-      ``,
-      `*Vehicle:* ${subject.title}`,
-      `*Class:* ${subject.subtitle}`,
-      `━━━━━━━━━━━━━━`,
-      v('Name', form.name),
-      v('Phone', form.phone),
-      v('Pickup', form.pickup),
-      v('Drop-off', form.dropoff),
-      v('Date', form.date),
-      v('Time', form.time),
-      v('Passengers', form.passengers),
-      v('Flight no.', form.flight),
-      v('Notes', form.notes),
-    ].join('\n')
+    return buildCustomerMessage({
+      ...common,
+      intro,
+      details: [
+        ['Date', form.date],
+        ['Time', form.time],
+        ['Passengers', form.passengers],
+        ['Pickup', form.pickup],
+        ['Drop-off', form.dropoff],
+        ['Flight', form.flight],
+        ['Vehicle', subject.kind === 'transfer' || subject.kind === 'customTransfer' ? vehicle : ''],
+        ['Notes', form.notes],
+      ],
+    })
   }
 
   const subjectName = subject.title
-  const waHref = `${site.whatsapp}?text=${encodeURIComponent(buildMessage())}`
-  const mailHref = `mailto:${site.email}?subject=${encodeURIComponent(
-    `${isTour ? 'Tour booking' : isTransfer ? 'Transfer booking' : isCustomTransfer ? 'Transfer request' : 'Reservation request'} — ${subjectName}`,
-  )}&body=${encodeURIComponent(buildMessage())}`
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    void persist('web')
+  }
+
+  async function persist(channel: 'web' | 'whatsapp') {
     if (saving) return
     setSubmitError('')
     try {
       const details = validateBookingDetails({ ...form, dropoff: form.destination || form.dropoff })
-      setSaving(true)
       requestId.current ??= crypto.randomUUID()
+      const id = requestId.current
+      // Open the tab synchronously so mobile browsers don't treat it as a blocked popup.
+      if (channel === 'whatsapp') window.open(`${site.whatsapp}?text=${encodeURIComponent(buildMessage(id))}`, '_blank', 'noopener,noreferrer')
+      setSaving(true)
       const booking = await saveBooking({
-        ...details, id: requestId.current,
+        ...details, id, channel,
         key: transferSlug ? `transfer:${transferSlug}` : customTransfer ? 'transfer:custom' : customTour ? 'tour:custom' : tour ? `tour:${tour}` : `car:${chosenCar}`,
         title: subject.title, car: chosenCar,
       })
-      setSavedId(booking.id)
-      setSubmitted(true)
+      router.replace(`/bookings/${booking.id}`)
     } catch (error) { setSubmitError(error instanceof Error ? error.message : 'Please try again.') }
     finally { setSaving(false) }
   }
@@ -492,36 +462,7 @@ export function ReserveForm({
 
         {/* Form / confirmation */}
         <div className="rounded-3xl border border-border bg-card p-6 md:p-8">
-          {submitted ? (
-            <div className="flex flex-col items-start gap-4">
-              <span className="inline-flex size-12 items-center justify-center rounded-full bg-gold/15 text-gold">
-                <Check className="size-6" aria-hidden="true" />
-              </span>
-              <h1 className="font-serif text-2xl font-semibold text-foreground">
-                Booking request saved
-              </h1>
-              <BookingCountdown date={form.date} time={form.time} />
-              <p className="text-muted-foreground">
-                Your <strong>{subjectName}</strong> request is saved. You can review, change or cancel it in My bookings. Availability and the final price still need confirmation; you can contact us below.
-              </p>
-              <div className="mt-2 flex w-full flex-col gap-3 sm:flex-row">
-                <Button
-                  asChild
-                  className="flex-1 bg-gold text-gold-foreground hover:bg-gold/90"
-                >
-                  <a href={waHref} target="_blank" rel="noreferrer">
-                    <MessageCircle className="size-5" aria-hidden="true" />
-                    Send on WhatsApp
-                  </a>
-                </Button>
-                <Button asChild variant="outline" className="flex-1 bg-transparent">
-                  <a href={mailHref}>Send by email instead</a>
-                </Button>
-              </div>
-              <Button asChild variant="outline"><Link href={`/bookings/${savedId}`}>View or change booking</Link></Button>
-            </div>
-          ) : (
-            <>
+          <>
               <h1 className="font-serif text-2xl font-semibold text-foreground md:text-3xl">
                 {isCustomTransfer ? (
                   <>
@@ -671,15 +612,26 @@ export function ReserveForm({
                   />
                 </Field>
                 {showPickupChoice && (
-                  <PickupPointChoice value={pickupPoint} onChange={choosePickupPoint} />
+                  <PickupPointChoice
+                    value={pickupPoint}
+                    onChange={choosePickupPoint}
+                    address={form.pickup}
+                    onAddressChange={(pickup) => setForm((prev) => ({ ...prev, pickup }))}
+                  />
                 )}
                 {!showPickupChoice && (
                   <Field label={isTour ? 'Pickup / hotel' : 'Pickup location'} required>
                     <input
                       required
-                      value={form.pickup}
-                      onChange={update('pickup')}
-                      className={inputCls}
+                      readOnly={pickupLocked}
+                      aria-readonly={pickupLocked}
+                      value={pickupLocked ? SKOPJE_AIRPORT_PICKUP : form.pickup}
+                      onChange={pickupLocked ? undefined : update('pickup')}
+                      className={
+                        pickupLocked
+                          ? `${inputCls} cursor-not-allowed border-border bg-secondary text-muted-foreground`
+                          : inputCls
+                      }
                       placeholder={isTour ? 'e.g. Your hotel in Skopje' : 'e.g. Skopje Airport (SKP)'}
                     />
                   </Field>
@@ -759,6 +711,17 @@ export function ReserveForm({
                           ? 'Send transfer booking request'
                           : 'Send reservation request'}
                   </Button>
+                  <Button
+                    type="button"
+                    disabled={saving}
+                    onClick={(e) => {
+                      if (e.currentTarget.form?.reportValidity()) void persist('whatsapp')
+                    }}
+                    className="w-full bg-whatsapp text-whatsapp-foreground hover:bg-whatsapp/90"
+                  >
+                    <MessageCircle className="size-5" aria-hidden="true" />
+                    Send on WhatsApp
+                  </Button>
                   <Button asChild variant="outline" className="w-full bg-transparent">
                     <a href={site.phoneHref}>
                       <Phone className="size-5" aria-hidden="true" />
@@ -769,7 +732,6 @@ export function ReserveForm({
               </form>
               )}
             </>
-          )}
         </div>
       </div>
     </section>

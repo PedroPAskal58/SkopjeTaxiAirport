@@ -11,13 +11,13 @@ import { cn } from '@/lib/utils'
 export function BookingHistory({ view }: { view: 'upcoming' | 'past' | 'cancelled' }) {
   const { data, error, isLoading, mutate } = useBookings()
   const now = Date.now()
-  const closed = (b: { status: string }) => b.status === 'cancelled' || b.status === 'rejected'
+  const closed = (b: { status: string }) => b.status === 'cancelled' || b.status === 'rejected' || b.status === 'expired'
   const groups = {
     upcoming: (data ?? []).filter(b => !closed(b) && (getPickupTimestamp(b.date, b.time) ?? 0) > now),
     past: (data ?? []).filter(b => !closed(b) && (getPickupTimestamp(b.date, b.time) ?? 0) <= now).reverse(),
     cancelled: (data ?? []).filter(closed).reverse(),
   }
-  const label = (b: { status: string }) => b.status === 'rejected' ? 'Declined · not available' : view === 'cancelled' ? 'Cancelled' : view === 'past' ? 'Past pickup date' : b.status === 'approved' ? 'Confirmed' : 'Requested · awaiting confirmation'
+  const label = (b: { status: string; channel?: string }) => b.status === 'rejected' ? 'Declined · not available' : b.status === 'expired' ? 'Expired · no WhatsApp message received' : view === 'cancelled' ? 'Cancelled' : view === 'past' ? 'Past pickup date' : b.status === 'approved' ? 'Confirmed' : b.channel === 'whatsapp' ? 'Booked on WhatsApp · awaiting reply' : 'Requested · awaiting confirmation'
   return (
     <section className="mx-auto max-w-4xl px-6 py-12 md:py-16">
       <div className="flex flex-wrap items-start justify-between gap-4">

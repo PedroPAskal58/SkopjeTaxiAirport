@@ -75,6 +75,8 @@ CREATE TABLE IF NOT EXISTS "bookings" (
 );
 
 ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "email" text NOT NULL DEFAULT '';
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "channel" text NOT NULL DEFAULT 'web';
+ALTER TABLE "bookings" ADD COLUMN IF NOT EXISTS "whatsapp_sent_at" timestamptz;
 
 CREATE INDEX IF NOT EXISTS "bookings_status_idx" ON "bookings" ("status", "updated_at" DESC);
 CREATE INDEX IF NOT EXISTS "bookings_user_idx" ON "bookings" ("userId");

@@ -4,10 +4,11 @@ import { useEffect, useState } from 'react'
 import { Clock } from 'lucide-react'
 import { formatPickupDate, getCountdownParts, getPickupTimestamp } from '@/lib/booking-time'
 
-export function BookingCountdown({ date, time, compact = false }: {
+export function BookingCountdown({ date, time, compact = false, action }: {
   date: string
   time: string
   compact?: boolean
+  action?: React.ReactNode
 }) {
   const target = getPickupTimestamp(date, time)
   const [now, setNow] = useState<number | null>(null)
@@ -55,29 +56,31 @@ export function BookingCountdown({ date, time, compact = false }: {
   }
 
   return (
-    <section aria-label="Booking countdown" className="w-full rounded-2xl border border-gold/30 bg-background p-5 text-foreground sm:p-6">
-      <div className="flex items-center gap-2 text-sm font-semibold text-gold">
-        <Clock className="size-4" aria-hidden="true" />
-        <h2>Countdown to your pickup</h2>
+    <section aria-label="Booking countdown" className="w-full rounded-2xl border border-border bg-card p-4 text-foreground sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Clock className="size-4 shrink-0 text-gold" aria-hidden="true" />
+            Pickup in
+          </h2>
+          <p className="truncate text-xs text-muted-foreground">{formatPickupDate(date, time)}</p>
+        </div>
+        {action && <div className="shrink-0">{action}</div>}
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-        {formatPickupDate(date, time)} · Skopje time
-      </p>
-      <div className="py-5">
-        <div role="timer" aria-live="off" aria-label="Time until requested pickup" className="grid grid-cols-4 gap-2 sm:gap-3">
+      {remaining?.reached ? (
+        <p role="status" className="mt-4 text-sm leading-relaxed text-muted-foreground">
+          Your requested pickup time has arrived. Contact your driver for pickup details.
+        </p>
+      ) : (
+        <div role="timer" aria-live="off" aria-label="Time until requested pickup" className="mt-4 grid grid-cols-4 gap-1.5 sm:gap-3">
           {units.map(([label, value]) => (
-            <div key={label} className="rounded-xl border border-border bg-secondary py-4 text-center text-secondary-foreground">
-              <span className="block font-sans text-3xl font-semibold tabular-nums tracking-tight sm:text-4xl">{value === undefined ? '—' : String(value).padStart(2, '0')}</span>
-              <span className="block text-sm leading-6 text-muted-foreground">{label}</span>
+            <div key={label} className="flex flex-col items-center rounded-xl bg-secondary px-1 py-2.5 text-secondary-foreground sm:py-4">
+              <span className="font-sans text-2xl font-semibold tabular-nums tracking-tight sm:text-4xl">{value === undefined ? '—' : String(value).padStart(2, '0')}</span>
+              <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">{label}</span>
             </div>
           ))}
         </div>
-      </div>
-      <p role="status" className="text-sm leading-relaxed text-muted-foreground">
-        {remaining?.reached
-          ? 'Your requested pickup time has arrived. Contact your driver for pickup details.'
-          : 'Counting down to your requested time. Your booking still needs confirmation on WhatsApp.'}
-      </p>
+      )}
     </section>
   )
 }

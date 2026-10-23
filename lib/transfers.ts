@@ -556,6 +556,10 @@ export function hasPickupPointChoice(transfer?: Pick<Transfer, 'from'>) {
   return transfer?.from === 'Skopje'
 }
 
+export function hasLockedAirportPickup(transfer?: Pick<Transfer, 'from'>) {
+  return transfer?.from === 'Skopje Airport'
+}
+
 export function getTransfer(slug: string) {
   return transfers.find((transfer) => transfer.slug === slug)
 }

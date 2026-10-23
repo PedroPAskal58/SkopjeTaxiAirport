@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Mail } from 'lucide-react'
+import { Mail, MessageCircle } from 'lucide-react'
 import { formatPickupDate } from '@/lib/booking-time'
 import { cn } from '@/lib/utils'
 import type { bookings } from '@/lib/db/schema'
@@ -11,6 +11,7 @@ const STATUS: Record<string, { label: string; className: string }> = {
   approved: { label: 'Confirmed', className: 'border-booking bg-booking text-background' },
   rejected: { label: 'Declined', className: 'border-destructive/50 text-destructive' },
   cancelled: { label: 'Cancelled by customer', className: 'border-border text-muted-foreground' },
+  expired: { label: 'Expired · no reply', className: 'border-border text-muted-foreground' },
 }
 
 function guestEmailLink(row: BookingRow) {
@@ -35,16 +36,26 @@ export function AdminBookingCard({ row, children }: { row: BookingRow; children?
   const verb = row.status === 'approved' ? 'Confirmed' : row.status === 'rejected' ? 'Declined' : row.status === 'cancelled' ? 'Cancelled' : null
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-5 md:p-6">
+    <article className="min-w-0 rounded-2xl border border-border bg-card p-4 sm:p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-semibold">{row.title}</h2>
+        <div className="min-w-0">
+          <p className="mb-1 text-xs text-muted-foreground">
+            Ref <span className="font-mono font-semibold uppercase tracking-wider text-foreground">#{row.id.slice(0, 8)}</span>
+          </p>
+          <h2 className="break-words text-xl font-semibold">{row.title}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {formatPickupDate(row.date, row.time)} · {row.name} · {row.passengers} passenger(s)
           </p>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', status.className)}>{status.label}</span>
+        <div className="flex flex-col items-start gap-1 sm:items-end">
+          <div className="flex flex-wrap gap-2 sm:justify-end">
+            {row.channel === 'whatsapp' && (
+              <span className="inline-flex items-center gap-1 rounded-full border border-[#25D366]/50 bg-[#25D366]/10 px-3 py-1 text-xs font-semibold text-[#25D366]">
+                <MessageCircle className="size-3.5" aria-hidden="true" /> via WhatsApp
+              </span>
+            )}
+            <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', status.className)}>{status.label}</span>
+          </div>
           {verb && <span className="text-xs text-muted-foreground">{verb} {reviewedFormat.format(row.updatedAt)}</span>}
         </div>
       </div>

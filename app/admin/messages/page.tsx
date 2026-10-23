@@ -15,7 +15,8 @@ import { AdminSignOut } from '@/components/admin-sign-out'
 export default async function AdminMessagesPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   await ensureSchema()
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user || !(await isAdminEmail(session.user.email))) redirect('/admin/sign-in')
+  if (!session?.user) redirect('/admin/sign-in')
+  if (!(await isAdminEmail(session.user.email))) redirect('/admin/sign-in?error=not-admin')
 
   const view = (await searchParams).view === 'done' ? 'done' : 'open'
   const handled = view === 'done'

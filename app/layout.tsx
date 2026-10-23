@@ -2,6 +2,7 @@ import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Manrope, Fraunces } from 'next/font/google'
 import { PriceNoticeDialog } from '@/components/price-notice-dialog'
+import { ScrollReveal } from '@/components/scroll-reveal'
 import { site } from '@/lib/site'
 import './globals.css'
 
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         {children}
         <PriceNoticeDialog />
+        <ScrollReveal />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

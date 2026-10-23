@@ -11,19 +11,24 @@ import { cn } from '@/lib/utils'
 import { AdminSignOut } from '@/components/admin-sign-out'
 import { AdminBookingActions } from '@/components/admin-booking-actions'
 import { AdminBookingCard } from '@/components/admin-booking-card'
+import { AdminRescheduleForm } from '@/components/admin-reschedule-form'
+import { expireStaleWhatsAppBookings } from '@/lib/db/expire-whatsapp'
 
-const REVIEWED = ['approved', 'rejected', 'cancelled']
+const REVIEWED = ['approved', 'rejected', 'cancelled', 'expired']
 const FILTERS = [
   { value: 'all', label: 'All' },
   { value: 'approved', label: 'Confirmed' },
   { value: 'rejected', label: 'Declined' },
   { value: 'cancelled', label: 'Cancelled' },
+  { value: 'expired', label: 'Expired' },
 ] as const
 
 export default async function AdminBookingsPage({ searchParams }: { searchParams: Promise<{ view?: string; status?: string }> }) {
   await ensureSchema()
   const session = await auth.api.getSession({ headers: await headers() })
-  if (!session?.user || !(await isAdminEmail(session.user.email))) redirect('/admin/sign-in')
+  if (!session?.user) redirect('/admin/sign-in')
+  if (!(await isAdminEmail(session.user.email))) redirect('/admin/sign-in?error=not-admin')
+  await expireStaleWhatsAppBookings()
 
   const params = await searchParams
   const view = params.view === 'history' ? 'history' : 'pending'
@@ -79,6 +84,9 @@ export default async function AdminBookingsPage({ searchParams }: { searchParams
         ) : rows.map(row => (
           <AdminBookingCard key={row.id} row={row}>
             {view === 'pending' && <AdminBookingActions id={row.id} />}
+            {(row.status === 'requested' || row.status === 'approved') && (
+              <AdminRescheduleForm key={`${row.id}:${row.revision}`} id={row.id} date={row.date} time={row.time} />
+            )}
           </AdminBookingCard>
         ))}
       </div>

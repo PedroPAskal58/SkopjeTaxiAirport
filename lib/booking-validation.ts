@@ -20,7 +20,9 @@ export type BookingRecord = BookingDetails & {
   key: string
   title: string
   car: string
-  status: 'requested' | 'approved' | 'rejected' | 'cancelled'
+  status: 'requested' | 'approved' | 'rejected' | 'cancelled' | 'expired'
+  channel: 'web' | 'whatsapp'
+  whatsappSentAt: string | null
   savedAt: number
   cancelledAt: string | null
   revision: number

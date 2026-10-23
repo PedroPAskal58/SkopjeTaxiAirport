@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from 'react'
 import useSWR, { mutate } from 'swr'
 import { getPickupTimestamp } from '@/lib/booking-time'
-import { createBooking } from '@/app/actions/bookings'
+import { createBooking, markWhatsAppOpened, markWhatsAppSent } from '@/app/actions/bookings'
 import type { BookingDetails, BookingRecord } from '@/lib/booking-validation'
 
 export type SavedBooking = BookingRecord
@@ -60,11 +60,26 @@ function write(key: string, value: string) {
   window.dispatchEvent(new Event(CHANGE_EVENT))
 }
 
-export async function saveBooking(booking: BookingDetails & { id: string; key: string; title: string; car?: string }) {
+function upsertCached(booking: BookingRecord) {
+  return mutate(BOOKINGS_URL, (current: BookingRecord[] = []) => [...current.filter(item => item.id !== booking.id), booking].sort((a, b) => bookingEndsAt(a) - bookingEndsAt(b)), { revalidate: false })
+}
+
+export async function saveBooking(booking: BookingDetails & { id: string; key: string; title: string; car?: string; channel?: 'web' | 'whatsapp' }) {
   const result = await createBooking(booking)
   if (result.error || !result.booking) throw new Error(result.error || 'Booking could not be saved.')
-  await mutate(BOOKINGS_URL, (current: BookingRecord[] = []) => [...current.filter(item => item.id !== result.booking!.id), result.booking!].sort((a, b) => bookingEndsAt(a) - bookingEndsAt(b)), { revalidate: false })
+  await upsertCached(result.booking)
   return result.booking
+}
+
+export async function trackWhatsAppOpened(id: string) {
+  const result = await markWhatsAppOpened(id)
+  if (result.booking) await upsertCached(result.booking)
+}
+
+export async function confirmWhatsAppSent(id: string) {
+  const result = await markWhatsAppSent(id)
+  if (result.error || !result.booking) throw new Error(result.error || 'Could not update your booking.')
+  await upsertCached(result.booking)
 }
 
 export function useActiveBooking(): SavedBooking | null {
@@ -80,7 +95,7 @@ export function useBannerBooking(): SavedBooking | null {
   const upcoming = data?.filter(booking => bookingEndsAt(booking) > Date.now()) ?? []
   return (
     upcoming.find(booking => booking.status === 'requested' || booking.status === 'approved') ??
-    upcoming.find(booking => (booking.status === 'rejected' || booking.status === 'cancelled') && !dismissed.split(',').includes(booking.id)) ??
+    upcoming.find(booking => (booking.status === 'rejected' || booking.status === 'cancelled' || booking.status === 'expired') && !dismissed.split(',').includes(booking.id)) ??
     null
   )
 }
@@ -88,6 +103,34 @@ export function useBannerBooking(): SavedBooking | null {
 export function dismissBookingNotice(id: string) {
   const ids = readRaw(DISMISSED_KEY).split(',').filter(Boolean)
   write(DISMISSED_KEY, [...new Set([...ids, id])].join(','))
+}
+
+const REJECTED_TOAST_KEY = 'sat-seen-rejection-toasts'
+
+const TOAST_STATUSES = ['rejected', 'approved'] as const
+
+// Rejections keep the bare id so toasts already dismissed before approvals were added stay dismissed.
+function toastToken(booking: Pick<SavedBooking, 'id' | 'status'>) {
+  return booking.status === 'rejected' ? booking.id : `${booking.id}:${booking.status}`
+}
+
+export function useStatusToastBooking(): SavedBooking | null {
+  const { data } = useBookings()
+  const seen = useSyncExternalStore(subscribe, () => readRaw(REJECTED_TOAST_KEY), () => null)
+  if (seen === null) return null
+  const seenTokens = seen.split(',')
+  return (
+    data?.find(
+      booking =>
+        (TOAST_STATUSES as readonly string[]).includes(booking.status) &&
+        !seenTokens.includes(toastToken(booking)),
+    ) ?? null
+  )
+}
+
+export function markStatusToastSeen(booking: Pick<SavedBooking, 'id' | 'status'>) {
+  const tokens = readRaw(REJECTED_TOAST_KEY).split(',').filter(Boolean)
+  write(REJECTED_TOAST_KEY, [...new Set([...tokens, toastToken(booking)])].join(','))
 }
 
 export function isBookingFor(

@@ -8,8 +8,9 @@ import { BookingPhoneField } from '@/components/booking-phone-field'
 import { TripCarPicker } from '@/components/trip-car-picker'
 import { TripRideCard } from '@/components/trip-ride-card'
 import { validateBookingDetails } from '@/lib/booking-validation'
-import { saveBooking } from '@/lib/booking-memory'
+import { saveBooking, trackWhatsAppOpened } from '@/lib/booking-memory'
 import { site, vehicles, type VehicleSlug } from '@/lib/site'
+import { buildCustomerMessage } from '@/lib/whatsapp-message'
 import { MAX_RIDES, TRIP_IDEAS, itineraryText, newRide, rideProblem, rideTitle, sortRides, type TripRide } from '@/lib/trip'
 
 const inputCls =
@@ -47,17 +48,17 @@ export function TripBuilder() {
     setRides(current => (current.length >= MAX_RIDES ? current : [...current, newRide({ from })]))
   }
 
-  const message = [
-    '*NEW CUSTOM TRIP REQUEST*',
-    vehicle ? `*Vehicle:* ${vehicle.name} (${vehicle.type})` : '',
-    '',
-    itinerary,
-    '━━━━━━━━━━━━━━',
-    `*Name:* ${form.name || '-'}`,
-    `*Phone:* ${form.phone || '-'}`,
-    `*Passengers:* ${form.passengers || '-'}`,
-    `*Notes:* ${form.notes || '-'}`,
-  ].join('\n')
+  const message = buildCustomerMessage({
+    intro: `I'd like to plan a custom trip with ${rides.length} ${rides.length === 1 ? 'ride' : 'rides'}:\n\n${itinerary}`,
+    details: [
+      ['Passengers', form.passengers],
+      ['Vehicle', vehicle ? `${vehicle.name} (${vehicle.type})` : ''],
+      ['Notes', form.notes],
+    ],
+    name: form.name,
+    phone: form.phone,
+    bookingId: savedId || undefined,
+  })
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -246,7 +247,7 @@ export function TripBuilder() {
                   </p>
                   <div className="flex w-full flex-col gap-3 sm:flex-row">
                     <Button asChild className="flex-1 bg-gold text-gold-foreground hover:bg-gold/90">
-                      <a href={`${site.whatsapp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer">
+                      <a href={`${site.whatsapp}?text=${encodeURIComponent(message)}`} target="_blank" rel="noreferrer" onClick={() => void trackWhatsAppOpened(savedId)}>
                         <MessageCircle className="size-5" aria-hidden="true" /> Send on WhatsApp
                       </a>
                     </Button>
