@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from 'next'
 import { Manrope, Fraunces } from 'next/font/google'
 import { PriceNoticeDialog } from '@/components/price-notice-dialog'
 import { ScrollReveal } from '@/components/scroll-reveal'
+import { LeafCelebration } from '@/components/leaf-celebration'
 import { site } from '@/lib/site'
 import './globals.css'
 
@@ -58,6 +59,7 @@ export default function RootLayout({
         {children}
         <PriceNoticeDialog />
         <ScrollReveal />
+        <LeafCelebration />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

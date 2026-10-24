@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
+import { getBookingImage } from '@/lib/booking-image'
 import { ArrowLeft, MessageCircle, X } from 'lucide-react'
 import { useBookings, refreshBookings } from '@/lib/booking-memory'
 import { cancelBooking } from '@/app/actions/bookings'
@@ -17,10 +19,17 @@ import { vehicles } from '@/lib/site'
 export function BookingDetails({ id }: { id: string }) {
   const { data, error, isLoading, mutate } = useBookings()
   const booking = data?.find(b => b.id === id)
+  if (booking) return <BookingRecordDetails key={`${booking.id}:${booking.revision}`} booking={booking} />
   return <section className="mx-auto max-w-3xl px-4 py-8 sm:px-6 md:py-16">
     <Link href="/bookings" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" aria-hidden="true" /> All bookings</Link>
-    {isLoading ? <p className="mt-8" role="status">Loading your booking…</p> : error ? <div role="alert" className="mt-8"><p>We couldn&apos;t load your booking.</p><Button onClick={() => mutate()} variant="outline">Try again</Button></div> : booking ? <BookingRecordDetails key={`${booking.id}:${booking.revision}`} booking={booking} /> : <div className="mt-8"><h1 className="font-serif text-3xl">Booking not found</h1><p className="mt-3 text-muted-foreground">Open this page in the browser you used to make the booking. Bookings are private to that browser.</p></div>}
+    {isLoading ? <p className="mt-8" role="status">Loading your booking…</p> : error ? <div role="alert" className="mt-8"><p>We couldn&apos;t load your booking.</p><Button onClick={() => mutate()} variant="outline">Try again</Button></div> : <div className="mt-8"><h1 className="font-serif text-3xl">Booking not found</h1><p className="mt-3 text-muted-foreground">Open this page in the browser you used to make the booking. Bookings are private to that browser.</p></div>}
   </section>
+}
+
+function BookingTitle({ title }: { title: string }) {
+  const [from, ...rest] = title.split(' to ')
+  if (!rest.length) return <>{title}</>
+  return <>{from} <span className="text-gold">to</span> {rest.join(' to ')}</>
 }
 
 function BookingRecordDetails({ booking }: { booking: BookingRecord }) {
@@ -53,15 +62,25 @@ function BookingRecordDetails({ booking }: { booking: BookingRecord }) {
     <Link href={`/bookings/${booking.id}/change`}><MessageCircle data-icon="inline-start" /> Request a change</Link>
   </Button> : undefined
 
-  return <div className="mt-5 flex flex-col gap-4 sm:mt-6 sm:gap-6">
-    <header className="flex flex-col gap-2.5">
-      <span className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>
-        <span className={`size-1.5 rounded-full bg-current ${upcoming && booking.status === 'requested' ? 'animate-pulse' : ''}`} aria-hidden="true" />
-        {statusLabel}
-      </span>
-      <h1 className="text-balance font-serif text-2xl font-semibold leading-tight sm:text-3xl md:text-4xl">{booking.title}</h1>
-      <p className="text-xs text-muted-foreground">Reference <span className="font-mono font-semibold uppercase tracking-wider text-foreground">#{booking.id.slice(0, 8)}</span></p>
+  return <article>
+    <header className="relative isolate overflow-hidden">
+      <Image src={getBookingImage(booking.key)} alt="" fill priority sizes="100vw" className={`-z-10 object-cover ${closed ? 'grayscale' : ''}`} />
+      <div className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/70 to-background/20" aria-hidden="true" />
+      <div className="mx-auto flex min-h-[380px] max-w-3xl flex-col justify-end px-4 pb-10 pt-24 sm:px-6 md:min-h-[460px]">
+        <Link href="/bookings" className="mb-6 inline-flex items-center gap-1.5 self-start rounded-full bg-background/80 px-3 py-1.5 text-sm font-medium text-foreground backdrop-blur transition hover:bg-background">
+          <ArrowLeft className="size-4" aria-hidden="true" /> All bookings
+        </Link>
+        <span className="w-fit rounded-full bg-background/80 backdrop-blur">
+          <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>
+            <span className={`size-1.5 rounded-full bg-current ${upcoming && booking.status === 'requested' ? 'animate-pulse' : ''}`} aria-hidden="true" />
+            {statusLabel}
+          </span>
+        </span>
+        <h1 className="mt-3 text-balance font-serif text-4xl font-semibold leading-tight text-foreground md:text-5xl"><BookingTitle title={booking.title} /></h1>
+        <p className="mt-3 text-sm text-muted-foreground md:text-base">Reference <span className="font-mono font-semibold uppercase tracking-wider text-foreground">#{booking.id.slice(0, 8)}</span></p>
+      </div>
     </header>
+    <div className="mx-auto flex max-w-3xl flex-col gap-4 px-4 pb-16 sm:gap-6 sm:px-6">
     {booking.status === 'cancelled' ? <BookingCancelContactCard booking={booking} /> : booking.status === 'rejected' ? <div role="status" className="rounded-2xl border border-border bg-card p-5"><p className="flex items-center gap-2 font-semibold"><X className="size-5 text-destructive" aria-hidden="true" /> We can&apos;t take this booking</p><p className="mt-2 text-sm leading-relaxed text-muted-foreground">Sorry, we don&apos;t have availability for this request. Please choose another date or time and send a new booking.</p></div> : upcoming && <BookingCountdown date={booking.date} time={booking.time} action={changeLink} />}
     {upcoming && (booking.status === 'requested' || confirmed) && <BookingWhatsAppCard booking={booking} />}
     {error && <p role="alert" className="rounded-xl border border-destructive/40 bg-card p-4 text-sm text-foreground">{error}</p>}
@@ -75,5 +94,6 @@ function BookingRecordDetails({ booking }: { booking: BookingRecord }) {
     {editable && !confirmCancel && <div className="flex"><Button variant="outline" className="h-11 w-full sm:w-auto border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setConfirmCancel(true)}><X data-icon="inline-start" /> Cancel</Button></div>}
     {confirmCancel && <section aria-labelledby="cancel-title" className="rounded-2xl border border-destructive/40 bg-card p-4 sm:p-5"><h2 id="cancel-title" className="text-lg font-semibold">Cancel this booking?</h2><p className="mt-2 text-sm leading-relaxed text-muted-foreground">This cannot be undone. To travel later, you will need a new booking. Next, you&apos;ll be able to let us know on WhatsApp or by email.</p><div className="mt-4 grid grid-cols-2 gap-3 sm:flex"><Button variant="destructive" className="h-11" disabled={busy} onClick={cancel}>{busy ? 'Cancelling…' : 'Yes, cancel'}</Button><Button variant="outline" className="h-11" disabled={busy} onClick={() => setConfirmCancel(false)}>Keep it</Button></div></section>}
     {!upcoming && <Button asChild variant="outline" className="h-11"><Link href="/book">Book another ride</Link></Button>}
-  </div>
+    </div>
+  </article>
 }

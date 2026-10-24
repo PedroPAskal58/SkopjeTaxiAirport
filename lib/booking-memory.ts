@@ -5,6 +5,7 @@ import useSWR, { mutate } from 'swr'
 import { getPickupTimestamp } from '@/lib/booking-time'
 import { createBooking, markWhatsAppOpened, markWhatsAppSent } from '@/app/actions/bookings'
 import type { BookingDetails, BookingRecord } from '@/lib/booking-validation'
+import { celebrateBooking } from '@/components/leaf-celebration'
 
 export type SavedBooking = BookingRecord
 
@@ -68,6 +69,7 @@ export async function saveBooking(booking: BookingDetails & { id: string; key: s
   const result = await createBooking(booking)
   if (result.error || !result.booking) throw new Error(result.error || 'Booking could not be saved.')
   await upsertCached(result.booking)
+  celebrateBooking()
   return result.booking
 }
 

@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
+import { getBookingImage } from '@/lib/booking-image'
 import { CalendarCheck, ArrowRight, Plus } from 'lucide-react'
 import { useBookings } from '@/lib/booking-memory'
 import { getPickupTimestamp, formatPickupDate } from '@/lib/booking-time'
@@ -32,12 +34,17 @@ export function BookingHistory({ view }: { view: 'upcoming' | 'past' | 'cancelle
         {isLoading && <p role="status" className="py-8 text-muted-foreground">Loading your bookings…</p>}
         {error && <div role="alert" className="rounded-2xl border border-border bg-card p-6"><p>We couldn&apos;t load your bookings.</p><Button variant="outline" onClick={() => mutate()} className="mt-3">Try again</Button></div>}
         {!isLoading && !error && !groups[view].length && <div className="rounded-2xl border border-border bg-card p-8 text-center"><CalendarCheck className="mx-auto size-8 text-muted-foreground" aria-hidden="true" /><h2 className="mt-4 text-xl font-semibold">No {view} bookings</h2><p className="mt-2 text-sm text-muted-foreground">{view === 'upcoming' ? 'Your next journey starts with a booking request.' : 'Bookings will appear here as their status changes.'}</p><Link href="/book" className="mt-5 inline-flex text-sm font-semibold text-gold hover:underline">Book a ride <ArrowRight className="ml-2 size-4" aria-hidden="true" /></Link></div>}
-        {!error && groups[view].map(booking => <Link key={booking.id} href={`/bookings/${booking.id}`} className={cn('flex flex-col rounded-2xl border p-5 transition hover:border-booking/60 sm:p-6', view === 'upcoming' ? 'border-booking/30 bg-booking-surface/30 text-foreground' : 'border-border bg-card text-card-foreground')}>
+        {!error && groups[view].map(booking => <Link key={booking.id} href={`/bookings/${booking.id}`} className={cn('flex flex-col overflow-hidden rounded-2xl border transition hover:border-booking/60 sm:flex-row', view === 'upcoming' ? 'border-booking/30 bg-booking-surface/30 text-foreground' : 'border-border bg-card text-card-foreground')}>
+          <div className="relative aspect-[16/7] shrink-0 bg-secondary sm:aspect-auto sm:w-56">
+            <Image src={getBookingImage(booking.key)} alt="" fill sizes="(min-width: 640px) 224px, 100vw" className={cn('object-cover', view !== 'upcoming' && 'grayscale')} />
+          </div>
+          <div className="flex min-w-0 flex-1 flex-col p-5 sm:p-6">
           <div className="flex items-center justify-between gap-3"><span className={cn('text-sm font-semibold', view === 'upcoming' ? 'text-booking' : 'text-muted-foreground')}>{label(booking)}</span><ArrowRight className="size-5 shrink-0" aria-hidden="true" /></div>
           <h2 className="mt-3 font-serif text-xl font-semibold">{booking.title}</h2>
           <p className="mt-2 text-sm text-muted-foreground">{formatPickupDate(booking.date, booking.time)} · Skopje time</p>
           <p className="mt-1 text-sm text-muted-foreground">{booking.passengers} passenger{booking.passengers === '1' ? '' : 's'} · {booking.pickup}</p>
           {view === 'upcoming' && <div className="mt-4"><BookingCountdown date={booking.date} time={booking.time} compact /></div>}
+          </div>
         </Link>)}
       </div>
     </section>
